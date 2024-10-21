@@ -126,6 +126,14 @@ module REXML
       end
     end
 
+    def skip(pattern, cons=false)
+      if cons
+        @scanner.skip(pattern)
+      else
+        @scanner.match?(pattern)
+      end
+    end
+
     def position
       @scanner.pos
     end
@@ -265,6 +273,23 @@ module REXML
       end
 
       md.nil? ? nil : @scanner
+    end
+
+    def skip( pattern, cons=false )
+      # To avoid performance issue, we need to increase bytes to read per scan
+      min_bytes = 1
+      while true
+        if cons
+          md = @scanner.skip(pattern)
+        else
+          md = @scanner.match?(pattern)
+        end
+        return md if md
+        return nil if pattern.is_a?(String)
+        return nil if @source.nil?
+        return nil unless read(nil, min_bytes)
+        min_bytes *= 2
+      end
     end
 
     def empty?
